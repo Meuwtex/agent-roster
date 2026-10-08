@@ -20,7 +20,7 @@ const HOME = homedir();
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = process.env.AGENT_ROSTER_CONFIG || join(process.env.XDG_CONFIG_HOME || join(HOME, ".config"), "agent-roster");
 const CONFIG = (() => { try { return JSON.parse(readFileSync(join(CONFIG_DIR, "config.json"), "utf8")); } catch { return {}; } })();
-const REPO = CONFIG.feedback_repo || "Solteris-Dev/agent-roster";
+const REPO = CONFIG.feedback_repo || "Meuwtex/agent-roster";
 const DRAFT = join(process.env.XDG_CACHE_HOME || join(HOME, ".cache"), "agent-roster", "feedback-draft.md");
 
 const sh = (cmd, argv, timeout = 30000) => new Promise((res) =>

@@ -58,13 +58,13 @@ and anything else that reads `SKILL.md`.
 ## Install
 
 ```sh
-npx skills add Solteris-Dev/agent-roster -g        # symlinks into every agent it finds
+npx skills add Meuwtex/agent-roster -g        # symlinks into every agent it finds
 ```
 
 or by hand:
 
 ```sh
-git clone https://github.com/Solteris-Dev/agent-roster ~/.agents/skills/agent-roster
+git clone https://github.com/Meuwtex/agent-roster ~/.agents/skills/agent-roster
 ln -s ~/.agents/skills/agent-roster ~/.claude/skills/agent-roster   # Claude Code
 ln -s ~/.agents/skills/agent-roster ~/.codex/skills/agent-roster    # Codex
 ln -s ~/.agents/skills/agent-roster ~/.cursor/skills/agent-roster   # Cursor
