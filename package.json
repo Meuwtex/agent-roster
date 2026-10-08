@@ -1,0 +1,10 @@
+{
+  "name": "agent-roster",
+  "version": "0.1.0",
+  "description": "Agent skill: live inventory of installed coding agents, logins, plans and quota, with routing by task and by which model is asking.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": { "probe": "node probe.mjs", "test": "node test/smoke.mjs" }
+}
