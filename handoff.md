@@ -39,6 +39,12 @@ prompt, because the target can't see your context: what to do, where, what
   `-p "<brief>"` last (or write `-p='<brief>'`).
 - `--mode plan` for read-only planning; `--add-dir` to widen the workspace.
 - `agy models` may also list Claude and GPT-OSS models billed to the Google plan.
+- **Headless `-p` can't read files or run commands** until the user picks "always
+  allow" for them in an interactive session, and prompts can't come from stdin
+  (argv only, ~128 KB). For read-heavy jobs, use the same Gemini models through
+  Cursor (`cursor-agent --model gemini-…`) or have the user approve once.
+- "auth: ok" in the snapshot means logged in, not able to do *this* job: check
+  the recipe's constraints.
 
 ## Jules (Google, async, GitHub repos only)
 
