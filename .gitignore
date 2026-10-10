@@ -2,3 +2,5 @@ node_modules/
 *.log
 evals/results/
 evals/*-result.json
+.env
+.env.*
