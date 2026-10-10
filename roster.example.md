@@ -19,7 +19,7 @@ effort, Gemini Pro) or **fast** (Sonnet, Haiku, Flash, mini, Composer, local).
 
 | Task | Ranked targets | Rules |
 |---|---|---|
-| Hard implementation, debugging, architecture | frontier models: Claude (Opus) ≈ Codex (high effort) > Gemini Pro (agy) > Cursor with a frontier model | A fast-tier model escalates rather than attempts it. A frontier model that already holds the context does it itself. |
+| Hard implementation, debugging, architecture | frontier models: Claude (Opus) ≈ Codex (high effort) > Gemini Pro (agy) > Cursor with a frontier model | A fast-tier model escalates rather than attempts it, and **escalating includes a stronger model in your own harness** (e.g. an Opus subagent from Claude Code, a high-effort model in Codex) when no other CLI is logged in. A frontier model that already holds the context does it itself. |
 | Review / second opinion | a vendor **other than yours** | Never review with your own vendor. Read-only; the caller applies fixes. |
 | Bulk mechanical edits, search, extraction | cheap fast models: Cursor's own models > Gemini Flash (agy or Cursor) > fast subagents in your harness > local | Don't spend frontier quota on these. |
 | Async, self-contained tasks on a GitHub repo | Jules > a background CLI run | Code leaves the machine. |

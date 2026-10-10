@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// agent-roster feedback: share routing outcomes with the maintainers, opt-in only.
+// agent-roster feedback: send routing problems to the maintainers.
 //
-//   node feedback.mjs ["optional note"]   write a draft and print it (sends nothing)
-//   node feedback.mjs --send              submit the draft as a GitHub issue
+//   node feedback.mjs ["what went wrong"]  write a draft and print it (sends nothing)
+//   node feedback.mjs --send               file the draft as a GitHub issue
+//   node feedback.mjs --off | --on         stop / resume the agent offering to send
 //
-// Off unless ~/.config/agent-roster/config.json has "feedback": true.
-// The draft holds only what's printed: agent names/versions, the roster's
-// routing table and track record, and your note, with emails and home paths
-// scrubbed. Read it (and edit the file) before sending; project names in your
-// track record are yours to keep or cut.
+// On by default. "feedback": false in ~/.config/agent-roster/config.json means
+// "don't offer again". The draft holds only what it prints: agent names and
+// versions, the roster's routing table and track record, and the note, with
+// emails and home paths scrubbed. The user sees it before anything is sent.
 
 import { execFile } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -26,8 +26,17 @@ const DRAFT = join(process.env.XDG_CACHE_HOME || join(HOME, ".cache"), "agent-ro
 const sh = (cmd, argv, timeout = 30000) => new Promise((res) =>
   execFile(cmd, argv, { timeout, encoding: "utf8" }, (err, out, errOut) => res({ ok: !err, out: (out || "").trim(), err: (errOut || "").trim() })));
 
-if (CONFIG.feedback !== true) {
-  console.log(`Feedback is off. To opt in, add "feedback": true to ${join(CONFIG_DIR, "config.json").replace(HOME, "~")}.`);
+const CONFIG_FILE = join(CONFIG_DIR, "config.json");
+for (const [flag, value] of [["--off", false], ["--on", true]]) {
+  if (process.argv.includes(flag)) {
+    mkdirSync(CONFIG_DIR, { recursive: true });
+    writeFileSync(CONFIG_FILE, JSON.stringify({ ...CONFIG, feedback: value }, null, 2) + "\n");
+    console.log(value ? "Feedback offers are back on." : "Done: the agent won't offer to send feedback again. (`feedback.mjs --on` to undo.)");
+    process.exit(0);
+  }
+}
+if (CONFIG.feedback === false && !process.argv.includes("--send")) {
+  console.log("Feedback offers are off (\"feedback\": false). Run with --on to re-enable.");
   process.exit(0);
 }
 
@@ -77,5 +86,5 @@ ${section("Track record")}
 mkdirSync(dirname(DRAFT), { recursive: true });
 writeFileSync(DRAFT, draft, { mode: 0o600 });
 console.log(draft);
-console.log(`---\nDraft saved to ${DRAFT.replace(HOME, "~")}. Nothing has been sent.\n` +
-  `Edit it if you like, then send it with: node ${join(HERE, "feedback.mjs").replace(HOME, "~")} --send  (files an issue on ${REPO})`);
+console.log(`---\nDraft saved to ${DRAFT.replace(HOME, "~")}; nothing sent yet. ` +
+  `Send: \`node ${join(HERE, "feedback.mjs").replace(HOME, "~")} --send\` (public issue on ${REPO}). Never ask again: \`--off\`.`);

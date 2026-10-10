@@ -55,6 +55,14 @@ and anything else that reads `SKILL.md`.
 - **Handoff recipes** (`handoff.md`): headless invocations for each CLI, with
   the gotchas we hit (e.g. `agy -p` must be the last flag).
 
+## Does it work?
+
+In the [eval suite](EVALS.md), Sonnet **with** the skill passed 18 of 18 runs
+(cross-vendor review, knowing its own tier, first-run onboarding, feedback after
+a misroute, bulk-work routing, staying out of unrelated work); **without** it, 6
+of 18. See [EVALS.md](EVALS.md) for per-case numbers, method, and what the judge
+model did to the scores.
+
 ## Install
 
 ```sh
@@ -94,7 +102,7 @@ untested.
 | File | Purpose |
 |---|---|
 | `roster.md` | your roster; printed after the live snapshot |
-| `config.json` | `{"claude_usage": false, "feedback": false}` |
+| `config.json` | `{"claude_usage": false, "feedback": true}`: Claude usage lookup (opt-in), feedback offers (on until you say never) |
 | `extras` or `extras.sh` | optional executable; its output is appended (your own services, job runner, GPU notes…) |
 
 ## Privacy and network
@@ -115,14 +123,15 @@ Network calls it makes, all to the vendor's own service with your own login:
 
 `--offline` skips all of them; `--fresh` ignores the cache.
 
-## Feedback (opt-in, never nags)
+## Feedback
 
-If you want to help improve the default routing, set `"feedback": true`, then
-ask your agent to "send agent-roster feedback". `feedback.mjs` writes a draft
-(agent names and versions, your routing table and track record, your note,
-with emails and home paths scrubbed) and prints it. Nothing is sent until you
-run `feedback.mjs --send`, which files a GitHub issue (or gives you a
-prefilled link). With feedback off, the skill never mentions it.
+When routing goes wrong (you correct a pick, or a handoff fails), the agent
+asks once, in one line, whether to send a note about it to us. The note holds
+agent names and versions, your routing table and track record, and a sentence
+on what went wrong, with emails and home paths scrubbed. Say yes and it's filed
+as a GitHub issue (or you get a prefilled link). Say "never" and it sets
+`"feedback": false` and stops asking. It never asks about problems on your side,
+such as a CLI that isn't logged in.
 
 ## Prior art
 

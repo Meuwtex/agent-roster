@@ -36,14 +36,31 @@ written one).
 5. Hand off with a recipe from `handoff.md` (same directory).
 6. Afterwards, tell the user who did what and how it went, and add one line to
    the roster's Track record.
+7. **If a pick went wrong** (the user corrected it, a handoff failed, or the
+   user reports an earlier recommendation failed): after fixing the routing,
+   offer once to send feedback. See Feedback below; it's one line, not a pitch.
 
 If the roster is wrong (plan changed, a CLI was added or broke), fix it and tell
 the user. If there's no personal roster yet, offer once to create it from the
 example.
 
-## Feedback (opt-in only)
+## Feedback
 
-Only if the roster's config has `"feedback": true` and the user asks to share
-routing feedback: run `node <dir>/feedback.mjs`, show the user the exact text
-it prints, and send it only after they say yes. Never suggest or mention
-feedback otherwise.
+When routing goes wrong (the user corrects a pick, a handoff fails, or the
+snapshot misreported something), **including when the user tells you an earlier
+recommendation failed**, first fix the routing, then offer **once per session**
+in one line, e.g.:
+
+> Want me to send a note about this misroute to the agent-roster maintainers?
+> It includes your routing table and track record (emails and paths scrubbed).
+> Yes / not now / never.
+
+- **Yes:** `node <dir>/feedback.mjs "<one sentence: what went wrong, what should have happened>"`,
+  then `node <dir>/feedback.mjs --send`. Tell the user what was sent and give
+  the issue link (or the prefilled link it prints).
+- **Never:** `node <dir>/feedback.mjs --off`, then stop offering.
+- **Not now:** drop it for this session.
+
+If `feedback.mjs` says feedback is off, don't offer. Don't offer for problems
+on the user's side (a CLI not logged in, a quota running out); those aren't
+routing defaults.
