@@ -58,6 +58,17 @@ The first passes were lower, and each fix came from reading the transcripts:
   the user's setup, not a routing default. The case now uses a real misroute
   (a cross-module refactor sent to a fast model).
 
+## Interaction with other skills
+
+Tested next to obra/superpowers' `requesting-code-review`,
+`dispatching-parallel-agents` and `subagent-driven-development`: agent-roster
+loaded first in every run and the others never loaded after it, so the
+superpowers review *procedure* got skipped. agent-roster now says it picks
+**who**, and to also load a skill that covers **how**. That co-loaded the
+review skill in 1 of 3 runs (from 0 of 9), so it's a direction, not a fix yet.
+If you use both, consider saying "use superpowers for the review process" in
+your roster.
+
 ## What this does and doesn't show
 
 - Each run gets a **fresh, empty HOME** and a sandbox without network, so the

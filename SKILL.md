@@ -34,7 +34,10 @@ written one).
 4. Respect the user's usage rules in the roster. If a plan is heavy (many
    subagents, top models at max effort, a lot of unapproved quota), say what,
    why and the rough scale, and ask first.
-5. Hand off with a recipe from `handoff.md` (same directory).
+5. Hand off with a recipe from `handoff.md` (same directory). This skill picks
+   **who** does the work. If another installed skill covers **how** to do it
+   (a code-review procedure, a parallel-dispatch or planning workflow), load
+   that one too and follow it with the worker chosen here.
 6. Afterwards, tell the user who did what and how it went, and add one line to
    the roster's Track record.
 7. **If a pick went wrong** (the user corrected it, a handoff failed, or the
