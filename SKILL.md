@@ -1,6 +1,6 @@
 ---
 name: agent-roster
-description: Live inventory of the coding agents and model subscriptions on this machine (Claude Code, Codex, Cursor, Antigravity/Gemini, Jules, Copilot, opencode, local ollama/LM Studio), with logins, plan tiers, quota left, and the user's own priorities, plus routing by task and by which model is asking, and handoff recipes. Use before delegating or spawning subagents, when choosing which model or agent should do a task, when asked for a second opinion or cross-vendor review, or when the user mentions other agents, subscriptions, or usage limits.
+description: Load BEFORE spawning subagents, splitting a task into parts, using the Agent/Task tool, or getting work reviewed. It shows which other coding agents and models are on this machine (Claude Code, Codex, Cursor, Antigravity/Gemini, Jules, local models), their logins and quota left, and the user's routing rules, so you pick the right worker and tier instead of defaulting to copies of yourself. Also use when choosing a model, asking for a second opinion, or when the user mentions other agents, subscriptions or usage limits.
 license: MIT
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/probe.mjs)
 ---
@@ -29,7 +29,8 @@ written one).
 2. Identify yourself: your **model**, not just the harness, its vendor, and its
    tier (frontier or fast). The snapshot's "invoked from" names the harness only.
 3. Pick a target from the roster's routing table for this task. Recommend; don't
-   default to your own vendor, and never review your own work with it.
+   default to your own vendor. For reviews prefer another vendor; if none is
+   usable, use a separate stronger reviewer and say it isn't independent.
 4. Respect the user's usage rules in the roster. If a plan is heavy (many
    subagents, top models at max effort, a lot of unapproved quota), say what,
    why and the rough scale, and ask first.

@@ -4,33 +4,44 @@ Does loading agent-roster actually change what an agent recommends? The suite
 in [`evals/`](evals) runs each case with the skill and without it (a no-skill
 baseline), using `claude plugin eval`.
 
-## Latest results (2026-10-10)
+## Latest results (2026-10-10, v3)
 
 | Case | What it checks | With skill | Without |
 |---|---|---|---|
-| [cross-vendor-review](evals/cross-vendor-review) | A second opinion goes to a *different* vendor, read-only, with a real command | **3/3** | 0/3 |
+| [spontaneous-build-review](evals/spontaneous-build-review) | **Unprompted:** a build-test-review task that never mentions agents or models. Does the skill load, and are workers and the reviewer chosen sensibly? | **3/3** (fired 3/3) | 0/3 (fired 0/3) |
+| [spontaneous-parallel-chores](evals/spontaneous-parallel-chores) | **Unprompted:** three small chores "in parallel if it helps". Does it load, and size the workers to the job? | **3/3** (fired 3/3) | 0/3 (routing alone 3/3) |
 | [hard-task-tier](evals/hard-task-tier) | The agent knows its own tier: a fast model escalates hard work (to another CLI or a stronger model in its own harness) | **3/3** | 0/3 |
 | [first-run-onboarding](evals/first-run-onboarding) | Reports what's really installed, invents nothing, offers once to create a roster, leaks no emails | **3/3** | 0/3 (0.33) |
 | [failed-handoff-feedback](evals/failed-handoff-feedback) | After a misroute it re-routes correctly, offers feedback once in one line, and sends nothing without a yes | **3/3** | 0/3 (0.33) |
+| [cross-vendor-review](evals/cross-vendor-review) | A second opinion goes to another vendor; if none is usable, it says so, labels any same-vendor fallback "not independent", and says how to get an independent one | **3/3** | 2/3 |
 | [bulk-mechanical](evals/bulk-mechanical) | A 300-file rename goes to a named cheap/fast model, not a frontier one | 3/3 | 3/3 |
 | [unrelated-no-trigger](evals/unrelated-no-trigger) | The skill stays out of an ordinary coding request | 3/3 | 3/3 |
-| **Overall** | | **18/18 runs** | **6/18 runs** (mean Δ +0.56) |
+| **Overall** | | **24/24 runs** | **8/24 runs** |
 
-**Setup:** Claude Code 2.1.296 · agent model Sonnet · judge Opus (LLM graders
-vote 2 of 3) · 3 runs per case per arm · 157 s · about $3.30 in
-API-equivalent cost.
-
-Without the skill, Sonnet gave reasonable generic advice ("use a codemod",
-"ask another model") but never named an available agent from another vendor,
-never placed itself in a tier, and could only guess at what was installed.
-`bulk-mechanical` and `unrelated-no-trigger` don't separate the arms: a plain
-"use a fast model and a codemod" answer is already good for a rename, and the
-negative case is meant to pass both ways.
+**Setup:** Claude Code 2.1.296 · agent model Sonnet · judge Opus (2-of-3 votes;
+the two spontaneous cases grade the whole trace, the rest the final message) ·
+3 runs per case per arm · billed to an API key: about $20 for all v3 runs,
+including reruns. cross-vendor-review was re-graded in its own run after its
+rubric changed (see below); all other numbers come from one full-suite run.
 
 ## What we learned getting here
 
 The first passes were lower, and each fix came from reading the transcripts:
 
+- **The description is the trigger.** v2 asked "does the skill load on its own
+  when the task doesn't mention routing?" It didn't: **0/6**. The description
+  listed what the skill *contains* and only mentioned subagents near the end.
+  Rewritten to lead with when to load it ("Load BEFORE spawning subagents,
+  splitting a task into parts, using the Agent/Task tool, or getting work
+  reviewed"), it fired **6/6**, and the unrelated-task case still stayed 3/3
+  (no over-triggering).
+- **An absolute rule blocks work.** "Never review with your own vendor" made one
+  agent stop and ask instead of reviewing when no other vendor was usable. The
+  rule now prefers another vendor, falls back to a separate, stronger
+  same-vendor reviewer labelled "not independent", and doesn't block. The
+  cross-vendor rubric was then updated to accept that honest fallback (it had
+  been failing answers that were, on reading, excellent), which also lets the
+  baseline pass 2/3. That case separates the arms less than before.
 - **The judge matters as much as the skill.** With a Haiku judge, a correct
   "I'm Sonnet, fast tier, escalate to Opus" answer was failed. With a Sonnet
   judge, two correct bulk-routing answers and an exact-template feedback offer
