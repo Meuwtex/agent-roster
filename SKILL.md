@@ -2,7 +2,7 @@
 name: agent-roster
 description: Load BEFORE spawning subagents, splitting a task into parts, using the Agent/Task tool, or getting work reviewed. It shows which other coding agents and models are on this machine (Claude Code, Codex, Cursor, Antigravity/Gemini, Jules, local models), their logins and quota left, and the user's routing rules, so you pick the right worker and tier instead of defaulting to copies of yourself. Also use when choosing a model, asking for a second opinion, or when the user mentions other agents, subscriptions or usage limits.
 license: MIT
-allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/probe.mjs)
+allowed-tools: Bash(node "${CLAUDE_SKILL_DIR}/probe.mjs")
 ---
 
 # Agent roster
@@ -12,7 +12,7 @@ are in, and how to hand work to each, whichever agent you are.
 
 ## Live snapshot
 
-!`node ${CLAUDE_SKILL_DIR}/probe.mjs`
+!`node "${CLAUDE_SKILL_DIR}/probe.mjs"`
 
 If no snapshot appears above (your agent doesn't run inline commands), run
 `probe.mjs`, which sits in the same directory as this SKILL.md:
