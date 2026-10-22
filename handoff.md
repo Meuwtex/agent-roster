@@ -5,7 +5,8 @@ prompt, because the target can't see your context: what to do, where, what
 "done" looks like, and what not to touch.
 
 - Always redirect stdin (`< /dev/null`) in headless runs; some CLIs otherwise
-  wait for input.
+  wait for input. On Windows these recipes are for Git Bash (what Claude Code
+  uses there); in PowerShell use `$null` and cmd `NUL` instead of `/dev/null`.
 - Run long jobs in the background with whatever job runner the user prefers
   (your harness's background mode, `systemd-run --user`, tmux). Check the roster
   for a preference, and avoid bare `nohup ... &`.

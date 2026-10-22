@@ -87,4 +87,4 @@ mkdirSync(dirname(DRAFT), { recursive: true });
 writeFileSync(DRAFT, draft, { mode: 0o600 });
 console.log(draft);
 console.log(`---\nDraft saved to ${DRAFT.replace(HOME, "~")}; nothing sent yet. ` +
-  `Send: \`node ${join(HERE, "feedback.mjs").replace(HOME, "~")} --send\` (public issue on ${REPO}). Never ask again: \`--off\`.`);
+  `Send: \`node "${join(HERE, "feedback.mjs").replace(HOME, "~")}" --send\` (public issue on ${REPO}). Never ask again: \`--off\`.`);

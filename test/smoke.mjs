@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const probe = join(dirname(fileURLToPath(import.meta.url)), "..", "probe.mjs");
 const home = mkdtempSync(join(tmpdir(), "agent-roster-test-"));
-const env = { HOME: home, PATH: "/nonexistent", XDG_CONFIG_HOME: join(home, ".config"), XDG_CACHE_HOME: join(home, ".cache") };
+// os.homedir() reads HOME on POSIX but USERPROFILE on Windows; set both or the probe sees the real home.
+const env = { HOME: home, USERPROFILE: home, PATH: "/nonexistent", XDG_CONFIG_HOME: join(home, ".config"), XDG_CACHE_HOME: join(home, ".cache") };
 const out = execFileSync(process.execPath, [probe, "--offline"], { env, encoding: "utf8" });
 const fail = (m) => { console.error("FAIL:", m, "\n" + out); process.exit(1); };
 if (!out.includes("## Live snapshot")) fail("no snapshot header");
