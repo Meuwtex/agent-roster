@@ -30,8 +30,18 @@ const MIN = 60e3, HOUR = 60 * MIN;
 // ---- helpers --------------------------------------------------------------
 
 function run(cmd, argv = [], timeout = 8000) {
+  let file = cmd, args = argv;
+  const opts = { timeout, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", CI: "1" } };
+  if (OS === "win32" && /\.(cmd|bat)$/i.test(cmd)) {
+    // npm installs CLIs as .cmd shims, and Node 18.20+ refuses to spawn those without a
+    // shell (spawn EINVAL). Go through cmd.exe; /s strips the outer quotes we add.
+    const q = (s) => (/[\s"&|<>^()]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
+    file = process.env.ComSpec || join(process.env.SystemRoot || "C:\\Windows", "System32", "cmd.exe");
+    args = ["/d", "/s", "/c", `"${[cmd, ...argv].map(q).join(" ")}"`];
+    opts.windowsVerbatimArguments = true;
+  }
   return new Promise((resolve) => {
-    execFile(cmd, argv, { timeout, encoding: "utf8", env: { ...process.env, NO_COLOR: "1", CI: "1" } }, (err, stdout, stderr) => {
+    execFile(file, args, opts, (err, stdout, stderr) => {
       resolve({ ok: !err, out: stripAnsi(stdout || "").trim(), err: stripAnsi(stderr || "").trim() });
     });
   });
@@ -131,10 +141,20 @@ async function invoker() {
 async function claude() {
   const bin = which("claude");
   if (!bin) return null;
-  const out = { name: "Claude Code", status: `${await version(bin)}${dupesNote("claude")}` };
-  const creds = readJSON(join(HOME, ".claude", ".credentials.json"))?.claudeAiOauth;
+  const out = { name: "Claude Code", status: `${(await version(bin)).replace(/\s*\(Claude Code\)$/, "")}${dupesNote("claude")}` };
+  const settings = readJSON(join(HOME, ".claude", "settings.json")) || {};
+  if (settings.model) out.defaults = `model ${settings.model}`;
+  let creds = readJSON(join(HOME, ".claude", ".credentials.json"))?.claudeAiOauth;
+  if (!creds && OS === "darwin") {
+    // macOS keeps the same JSON in the login Keychain.
+    const r = await run("security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"], 4000);
+    try { creds = JSON.parse(r.out)?.claudeAiOauth; } catch {}
+  }
+  // An API key (env or helper) bills per token to the API, not to a subscription's quota.
+  const apiKey = process.env.ANTHROPIC_API_KEY ? "ANTHROPIC_API_KEY" : process.env.ANTHROPIC_AUTH_TOKEN ? "ANTHROPIC_AUTH_TOKEN" : settings.apiKeyHelper ? "apiKeyHelper" : null;
   if (creds) {
-    out.auth = `subscription ${creds.subscriptionType ?? "?"}${creds.rateLimitTier ? ` (${creds.rateLimitTier.replace(/^default_claude_/, "")})` : ""}`;
+    out.auth = `subscription ${creds.subscriptionType ?? "?"}${creds.rateLimitTier ? ` (${creds.rateLimitTier.replace(/^default_claude_/, "")})` : ""}`
+      + (apiKey ? `; ${apiKey} is also set, so calls may bill to the API instead of the plan` : "");
     if (CONFIG.claude_usage && creds.accessToken) {
       // Unofficial endpoint (same one Claude Code's /usage uses). Opt-in: config.json {"claude_usage": true}.
       const u = await cached("claude-usage", 5 * MIN, async () => {
@@ -154,7 +174,8 @@ async function claude() {
         out.usage = [f("5h", u.five), f("7d", u.week), f("7d Opus", u.opus)].filter(Boolean).join(", ") + (u._age ? `, checked ${ago(u._age)}` : "");
       } else out.usage = "usage endpoint failed (unofficial; may have changed)";
     } else out.usage = "not checked (opt in with `\"claude_usage\": true` in config.json, or run /usage)";
-  } else out.auth = "no credentials file (macOS keeps them in Keychain; plan unknown)";
+  } else if (apiKey) out.auth = `API key (${apiKey}): pay-as-you-go, no subscription quota`;
+  else out.auth = `no login found (no credentials file${OS === "darwin" ? " or Keychain entry" : ""}; plan unknown)`;
   return out;
 }
 
@@ -319,7 +340,7 @@ async function local() {
 }
 
 async function vram() {
-  const desktop = !!(process.env.WAYLAND_DISPLAY || process.env.DISPLAY);
+  const desktop = OS === "win32" || !!(process.env.WAYLAND_DISPLAY || process.env.DISPLAY);
   const note = desktop ? "; a desktop session is running, so it shares the GPU: leave headroom" : "";
   if (OS === "linux") {
     try {
@@ -340,10 +361,15 @@ async function vram() {
 }
 
 async function extras() {
-  // User hook: any executable `extras` script in the config dir; its stdout is appended verbatim.
-  for (const f of ["extras", "extras.sh"]) {
+  // User hook: an `extras` script in the config dir; its stdout is appended verbatim.
+  // `extras.mjs` runs under this Node everywhere; `.sh` needs an `sh` on PATH on Windows (Git Bash).
+  for (const f of ["extras", "extras.sh", "extras.mjs", "extras.cmd", "extras.bat"]) {
     const p = join(CONFIG_DIR, f);
-    if (existsSync(p)) { const r = await run(p, [], 10000); return r.out || null; }
+    if (!existsSync(p)) continue;
+    const r = f.endsWith(".mjs") ? await run(process.execPath, [p], 10000)
+      : f.endsWith(".sh") && OS === "win32" ? await run("sh", [p], 10000)
+      : await run(p, [], 10000);
+    return r.out || null;
   }
   return null;
 }
@@ -365,8 +391,15 @@ console.log(lines.join("\n").replace(EMAIL, "<account>"));
 
 if (!args.has("--live")) {
   const mine = join(CONFIG_DIR, "roster.md");
-  if (existsSync(mine)) console.log("\n" + readFileSync(mine, "utf8"));
-  else {
+  if (existsSync(mine)) {
+    const roster = readFileSync(mine, "utf8");
+    // The example roster carries a "Last reviewed:" date; nudge when it has gone stale.
+    const reviewed = roster.match(/last reviewed:\s*(\d{4}-\d{2}-\d{2})/i)?.[1];
+    const days = reviewed ? Math.floor((Date.now() - Date.parse(reviewed)) / 864e5) : NaN;
+    if (days > 60) console.log(`\n> Roster last reviewed ${days} days ago (${reviewed}). Plans and CLIs may have changed since: ` +
+      "check it against the live snapshot above, fix what's stale, and update the date.");
+    console.log("\n" + roster);
+  } else {
     console.log(`\n> No personal roster yet. Showing the example; copy it to \`${tilde(mine)}\` and edit it ` +
       "(plans, priorities, what each agent is good at). Offer to do this for the user.\n");
     console.log(readFileSync(join(HERE, "roster.example.md"), "utf8"));

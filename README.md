@@ -29,7 +29,7 @@ and anything else that reads `SKILL.md`.
 ## My roster
 ### Routing: by task, relative to the model asking
 | Task | Ranked targets | Rules |
-| Review / second opinion | a vendor other than yours | never review with your own vendor |
+| Review / second opinion | a vendor other than yours | same-vendor fallback is labelled "not independent" |
 …
 ```
 
@@ -38,9 +38,10 @@ and anything else that reads `SKILL.md`.
 - **Live probe** (`probe.mjs`, Node 18+, no dependencies, about a second when cached):
   - versions, plus duplicate installs on PATH (the classic "the update went to
     a copy I don't run" bug);
-  - logins and plan tiers: Claude, Codex (every `CODEX_HOME`, so several
-    ChatGPT accounts), Cursor (checks that model calls really work, not just
-    `status`), Antigravity, Jules, Gemini CLI;
+  - logins and plan tiers: Claude (credentials file or macOS Keychain, and
+    whether an API key means pay-as-you-go instead), Codex (every
+    `CODEX_HOME`, so several ChatGPT accounts), Cursor (checks that model
+    calls really work, not just `status`), Antigravity, Jules, Gemini CLI;
   - quota windows: Codex 5h/7d from its own session logs, Antigravity weekly
     pools, and Claude 5h/7d if you opt in;
   - local runtimes (ollama, LM Studio) and GPU memory;
@@ -48,7 +49,8 @@ and anything else that reads `SKILL.md`.
     reported as present.
 - **Your roster** (`~/.config/agent-roster/roster.md`): what you pay for, your
   routing table, usage rules, and a track record of how delegated jobs went.
-  Plain markdown that you and your agents both edit.
+  Plain markdown that you and your agents both edit; the probe nudges when its
+  "Last reviewed" date is more than 60 days old.
 - **Routing by task *and* by who's asking**: a fast model (Flash, Haiku,
   Composer) escalates hard work, while a frontier model holding the context
   does it itself. Reviews always go to a different vendor.
@@ -57,11 +59,12 @@ and anything else that reads `SKILL.md`.
 
 ## Does it work?
 
-In the [eval suite](EVALS.md), Sonnet **with** the skill passed 18 of 18 runs
-(cross-vendor review, knowing its own tier, first-run onboarding, feedback after
-a misroute, bulk-work routing, staying out of unrelated work); **without** it, 6
-of 18. See [EVALS.md](EVALS.md) for per-case numbers, method, and what the judge
-model did to the scores.
+In the [eval suite](EVALS.md), Sonnet **with** the skill passed 24 of 24 runs
+(loading on its own before delegating, cross-vendor review, knowing its own
+tier, first-run onboarding, feedback after a misroute, bulk-work routing,
+staying out of unrelated work); **without** it, 8 of 24. See
+[EVALS.md](EVALS.md) for per-case numbers, method, and what the judge model
+did to the scores.
 
 ## Install
 
@@ -92,8 +95,11 @@ create your roster from `roster.example.md`.
 | Others | any harness that reads `SKILL.md` and can run a shell command |
 
 Tested on Linux (Arch) with Claude Code 2.1, Codex 0.162, Cursor Agent
-2026.09 and agy 1.3. macOS should work (the GPU line is skipped); Windows is
-untested.
+2026.09 and agy 1.3, and on Windows 11 (Node 24, Git Bash) with Claude Code
+2.1, where the inline snapshot and the nvidia-smi GPU line work; npm's `.cmd`
+shims are handled (Node 18.20+ won't spawn them without a shell). macOS should
+work, including the Keychain lookup for the Claude plan, but hasn't been run
+there yet. CI runs the tests on all three with Node 18, 20 and 22.
 
 ## Configuration
 
@@ -103,7 +109,7 @@ untested.
 |---|---|
 | `roster.md` | your roster; printed after the live snapshot |
 | `config.json` | `{"claude_usage": false, "feedback": true}`: Claude usage lookup (opt-in), feedback offers (on until you say never) |
-| `extras` or `extras.sh` | optional executable; its output is appended (your own services, job runner, GPU notes…) |
+| `extras`, `extras.sh`, `extras.mjs`, `extras.cmd` | optional script; its output is appended (your own services, job runner, GPU notes…). `.mjs` runs under the probe's Node on every platform |
 
 ## Privacy and network
 
@@ -132,6 +138,10 @@ on what went wrong, with emails and home paths scrubbed. Say yes and it's filed
 as a GitHub issue (or you get a prefilled link). Say "never" and it sets
 `"feedback": false` and stops asking. It never asks about problems on your side,
 such as a CLI that isn't logged in.
+
+## Changes
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Prior art
 
